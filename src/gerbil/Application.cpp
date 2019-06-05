@@ -70,14 +70,18 @@ unsigned long long getFreeSystemMemory()  {
  * default for params
  */
 // TODO: Reorder attributes
-gerbil::Application::Application() :
-		_k(0), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
-		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(0), _memSize(0),
+gerbil::Application::Application(uint32_t kmerSize, 
+				std::string fastFileName,
+				std::string tempFolderName, 
+				uint32_t thresholdMin,
+				std::string kmcFileName) :
+		_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
+		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
-		_fastFileName(""), _tempFolderName(""), _kmcFileName(""), _tempFiles(NULL),
+		_fastFileName(fastFileName), _tempFolderName(tempFolderName), _kmcFileName(kmcFileName), _tempFiles(NULL),
 		_rtRun1(0.0), _rtRun2(0.0), _memoryUsage1(0), _memoryUsage2(0),
 		_readerParserThreadsNumber(1), _numGPUs(0),
-		_singleStep(0), _leaveBinStat(false), _histogram(0), _outputFormat(of_gerbil)
+		_singleStep(0), _leaveBinStat(false), _histogram(0), _outputFormat(of_fasta)
 {
 
 }
@@ -88,156 +92,14 @@ gerbil::Application::~Application() {
 #endif
 }
 
-void gerbil::Application::parseParams(const int &argc, char** argv) {
-	uint i;
-	for (i = 1; i < argc && argv[i][0] == '-'; i++) {
-		switch (argv[i][1]) {
-		case 'k':
-			_k = atoi(argv[++i]);
-			break;
-		case 'm':
-			_m = atoi(argv[++i]);
-			break;
-		case 'f':
-			_tempFilesNumber = atoi(argv[++i]);
-			break;
-		case 'l':
-			_thresholdMin = atoi(argv[++i]);
-			break;
-		case 't':
-			_threadsNumber = atoi(argv[++i]);
-			break;
-		case 'e': {
-			std::string s(argv[++i]);
-			boost::regex rgx("(0*[1-9][0-9]*)(M|G)B?");
-			boost::smatch match;
-			if (!boost::regex_match(s, match, rgx)) {
-				std::cout
-						<< "invalid value for parameter -e\nuse -h for help\n";
-				exit(0);
-			}
-			_memSize = atoi(match.str(1).c_str());
-			if (match.str(2) == "G")
-				_memSize *= 1024;
-			break;
-		}
-		case 'd':
-			_norm = false;
-			break;
-		case 'i':
-			verbose = true;
-			break;
-		case 'o': {
-			std::string s(argv[++i]);
-			if (s == "fasta")
-				_outputFormat = of_fasta;
-			else if (s == "none")
-				_outputFormat = of_none;
-			else
-				_outputFormat = of_gerbil;
-			break;
-		}
-		case 'x':
-			switch(argv[++i][0]) {
-			case '1': _singleStep = 1; break;
-			case '2': _singleStep = 2; break;
-			case 'b': _leaveBinStat = true; break;
-			case 'h': _histogram = true; break;
-			}
-			break;
-#ifdef GPU
-		case 'g': {
-			// determine number of gpus to use
-			int num;
-			auto err = cudaGetDeviceCount(&num);
-			if (err != cudaSuccess) {
-				std::cerr << "Error while searching for GPU's: " << cudaGetErrorString(err) << std::endl;
-				std::cerr << "Disabling GPU support." << std::endl;
-				_numGPUs = 0;
-			} else {
-				_numGPUs = (uint8_t) std::min(num, 2);
-			}
-			break;
-		}
-#endif
-		case 's':
-			checkSystem();
-			exit(0);
-		case 'v':
-			std::cout << VERSION_MAJOR << "." << VERSION_MINOR << std::endl;
-			exit(0);
-		case 'h':
-			printf("_________________________________________________________________\n");
-			printf("Gerbil version %i.%i\n", VERSION_MAJOR, VERSION_MINOR);
-			printf("-----------------------------------------------------------------\n");
-			printf("usage: gerbil [<option>|<flag>]* <input> <temp> <output>\n");
-			printf("<option>:\n");
-			printf("  -k <size>             size of kmers (default: 28)\n");
-			printf("  -m <size>             size of minimizers (default: auto)\n");
-			printf("  -e <size>(M|G)B       size of ram usage (default: auto)\n");
-			printf("  -f <number>           number of temporary files (default: %u)\n",
-					DEF_TEMPFILES_NUMBER);
-			printf("  -t <number>           number of threads (default: auto)\n");
-			printf("  -l <count>            minimal count of k-mers (default: %u)\n",
-					DEF_THRESHOLD_MIN);
-			printf("<flag>:\n");
-			printf("  -h                    show help\n");
-			printf("  -v                    version\n");
-			printf("  -h                    help\n");
-			printf("  -d                    disable normalization\n");
-			printf("  -i                    verbose output\n");
-			printf("  -s                    system check\n");
-			printf("  -o <outputFormat>     output format\n");
-			printf("      outputFormat:\n");
-			printf("         gerbil         gerbil format\n");
-			printf("         fasta          fasta format\n");
-			printf("         none           no output\n");
-#ifdef GPU
-			printf("  -g                    enable gpu\n");
-#endif
-			printf("  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  \n");
-			printf("  -x <mode>             Debugging and testing purposes\n");
-			printf("                        (can be specified multiple times)\n");
-			printf("     modes:\n");
-			printf("        1               only step 1, leaves temporary files and a\n");
-			printf("                        binStatFile (with statistical stuff)\n");
-			printf("                        !Watch out: no <output>\n");
-			printf("        2               only step 2, requires temporary files and\n");
-			printf("                        the binStatFile\n");
-			printf("                        !Watch out: no <input>\n");
-			printf("        b               leaves the binStatFile\n");
-			printf("        h               saves the data for a histogram of the\n");
-			printf("                        uk-mers in the output folder\n");
-			printf("-----------------------------------------------------------------\n");
-			exit(0);
-		}
-	}
-	IF_REL(if (argc < 4) {
-		std::cout << "missing parameters\nuse -h for help\n"
-		;
-		exit(0)
-		;
-	});
 
-	if (i + (_singleStep ? 2 : 3) <= argc) {
-		if (_singleStep != 2)
-			_fastFileName = std::string(argv[i++]);
-		_tempFolderName = std::string(argv[i++]);
-		if(_singleStep != 1)
-			_kmcFileName = std::string(argv[i++]);
-	}
-		IF_REL(
-				else { std::cerr << "missing parameters (-h for help)\n"; exit(1); })
+void gerbil::Application::process() {
 
 	autocompleteParams();
-	if (verbose)
-		printParamsInfo();
-	checkParams();
-}
-
-void gerbil::Application::process(const int &argc, char** argv) {
-
-	parseParams(argc, argv);
+	
+	printParamsInfo();
+	
+	checkParams();	
 
 	ReadBundle::setK(_k);
 

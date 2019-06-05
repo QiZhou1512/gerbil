@@ -3,11 +3,11 @@
 
 using namespace gerbil;
 
-int main(int argc, char** argv) {
+int main() {
 
 	//Application
-	Application application;
-	application.process(argc, argv);
+	Application application(17,"/global/homes/q/qizhou/bella/paeruginosa30x_0001_5reads.fastq","tempDir",1,"outputTRY");
+	application.process();
 
 	return 0;
 }

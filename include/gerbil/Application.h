@@ -83,13 +83,14 @@ class Application {
 	void saveBinStat();
 	void loadBinStat();
 public:
-	Application();
+	Application(uint32_t kmerSize,
+			std::string fastFileName,
+			std::string tempFolderName,
+			uint32_t thresholdMin,
+			std::string kmcFileName);
 	~Application();
 
-	void process(const int &argc, char** argv);
-
-	void parseParams(const int &argc, char** argv);
-
+	void process();
 	void run1();
 
 	void run2();
