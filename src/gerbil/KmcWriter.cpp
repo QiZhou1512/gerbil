@@ -6,7 +6,8 @@
  */
 
 #include "../../include/gerbil/KmcWriter.h"
-
+#include<tuple>
+#include<vector>
 
 gerbil::KmcWriter::KmcWriter(std::string fileName, SyncSwapQueueMPSC<KmcBundle>* kmcSyncSwapQueue, const uint32_t &k, const TOutputFormat pOutputFormat) {
 	_processThread = NULL;
@@ -33,6 +34,7 @@ gerbil::KmcWriter::~KmcWriter() {
 
 
 void gerbil::KmcWriter::process() {
+		
 	if(_processThread)
 		return;
 	_processThread = new std::thread([this]{
@@ -70,7 +72,10 @@ void gerbil::KmcWriter::process() {
 
 						// increase pointer
 						p += kMerSize_B;
-
+						
+						std::tuple<char,uint32_t> pair = std::make_tuple(*kmerSeq, counter);
+						
+						list_Kmer.push_back(pair);
 						// print fasta (console/file)
 						fprintf(_file, ">%u\n%s\n", counter, kmerSeq);
 					}
