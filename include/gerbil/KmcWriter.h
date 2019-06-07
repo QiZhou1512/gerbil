@@ -33,7 +33,8 @@ class KmcWriter {
 	FILE* _file;
 	uint32_t _k;
 	TOutputFormat _outputFormat;
-	std::vector<std::tuple<char,uint32>> list_Kmer;
+	std::vector<std::pair<std::string,uint32>> list_Kmer;
+
 	SyncSwapQueueMPSC<KmcBundle>* _kmcSyncSwapQueue;
 
 	uint64_t _fileSize;

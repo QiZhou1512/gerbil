@@ -94,7 +94,7 @@ gerbil::Application::~Application() {
 
 
 void gerbil::Application::process() {
-
+	verbose = true;
 	autocompleteParams();
 	
 	printParamsInfo();

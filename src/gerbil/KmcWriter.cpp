@@ -72,11 +72,14 @@ void gerbil::KmcWriter::process() {
 
 						// increase pointer
 						p += kMerSize_B;
+						std::string kmer(kmerSeq);
+						std::pair<std::string,uint32_t> pair = std::make_pair(kmer, counter);
 						
-						std::tuple<char,uint32_t> pair = std::make_tuple(*kmerSeq, counter);
 						
 						list_Kmer.push_back(pair);
-						// print fasta (console/file)
+						std::cout<<std::get<0>(pair)<<" "<<std::get<1>(pair)<<"\n";
+						std::cout<<"size"<<list_Kmer.size()<<"\n";						
+		// print fasta (console/file)
 						fprintf(_file, ">%u\n%s\n", counter, kmerSeq);
 					}
 				}
