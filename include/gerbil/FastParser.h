@@ -186,6 +186,9 @@ namespace gerbil {
 		 */
 		void join();
 
+		void joinWithoutDelete();
+		void deleteProcessThread();
+
 		/*
 		 * prints some statistical outputs
 		 */

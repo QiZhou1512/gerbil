@@ -128,8 +128,7 @@ inline void gerbil::FastParser::errorEstimation(char *&bp, char *&bp_end, size_t
 	do{
 		char *sl(bp);
 		while(*bp != '\n' && *bp != '\r' && *bp){
-			length++;
-			
+			length++;	
 			int bqual = (int)*bp - ACSCIIBASE;
 			double berror = pow(10, -(double)bqual/10);
 			rerror += berror;
@@ -311,7 +310,7 @@ void gerbil::FastParser::processFastq(const size_t &tId) {
 				errorEstimation(bp, bp_end,l,readBundle, rbs, tId,'@');
 			}
 
-			//erate+=rerror;
+			erate+=rerror;
 			while (*bp && *bp != '@')
                 		skipLine(bp, bp_end, tId);
 
@@ -319,7 +318,7 @@ void gerbil::FastParser::processFastq(const size_t &tId) {
 		}
 	}
 	erate =(double) erate/_readsNumber;
-	
+        // std::cout<<erate<<'\n';		
 
 	
 	if (!readBundle->isEmpty())
@@ -427,6 +426,19 @@ void gerbil::FastParser::join() {
 	}
 	_syncQueue.finalize();
 	//printf("fastParser is rdy...\n");
+}
+
+void gerbil::FastParser::joinWithoutDelete(){
+	for(uint32 i = 0; i<_threadsNumber; ++i){
+		_processThreads[i]->join();
+	}
+}
+
+void gerbil::FastParser::deleteProcessThread(){
+	for(uint32 i = 0; i<_threadsNumber; ++i){
+		delete _processThreads[i];
+	}
+	_syncQueue.finalize();
 }
 
 gerbil::SyncSwapQueueMPMC<gerbil::ReadBundle> *gerbil::FastParser::getSyncQueue() {

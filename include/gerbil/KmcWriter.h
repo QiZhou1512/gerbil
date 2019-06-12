@@ -49,6 +49,8 @@ public:
 
 	void process();
 	void join();
+	void joinWithoutDelete();
+	void deleteProcessThread();
 	void print();
 };
 

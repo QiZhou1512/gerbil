@@ -74,14 +74,15 @@ gerbil::Application::Application(uint32_t kmerSize,
 				std::string fastFileName,
 				std::string tempFolderName, 
 				uint32_t thresholdMin,
-				std::string kmcFileName) :
+				std::string kmcFileName,
+				bool skipEstimate) :
 		_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
 		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
 		_fastFileName(fastFileName), _tempFolderName(tempFolderName), _kmcFileName(kmcFileName), _tempFiles(NULL),
 		_rtRun1(0.0), _rtRun2(0.0), _memoryUsage1(0), _memoryUsage2(0),
 		_readerParserThreadsNumber(1), _numGPUs(0),
-		_singleStep(0), _leaveBinStat(false), _histogram(0), _outputFormat(of_fasta)
+		_singleStep(0), _leaveBinStat(false), _histogram(0), _outputFormat(of_fasta), _skipEstimate(skipEstimate)
 {
 
 }
@@ -135,7 +136,7 @@ void gerbil::Application::run1() {
 	FastReader fastReader(frBlocksNumber, _fastFileName,
 			_readerParserThreadsNumber);
 	FastParser fastParser(readBundlesNumber, fastReader.getFileType(), st_reads,
-			fastReader.getSyncSwapQueues(), _readerParserThreadsNumber, false);//TODO change the 'false' into a variable from the application function
+			fastReader.getSyncSwapQueues(), _readerParserThreadsNumber, _skipEstimate);
 	SequenceSplitter sequenceSplitter(superBundlesNumber,
 			fastParser.getSyncQueue(), _sequenceSplitterThreadsNumber, _k, _m,
 			_tempFilesNumber, _norm);
@@ -151,7 +152,13 @@ void gerbil::Application::run1() {
 
 	// join all
 	fastReader.join();
-	fastParser.join();
+	//fastParser.join();
+	//joins all the threads, retrive the value and then delete the threads
+	fastParser.joinWithoutDelete();
+	erate = fastParser.getErate();
+	fastParser.deleteProcessThread();
+	
+	//std::cout<<erate<<'\n';
 	sequenceSplitter.join();
 	superWriter.join();
 
@@ -162,7 +169,7 @@ void gerbil::Application::run1() {
 	sw.stop();
 	_rtRun1 = sw.get_s();
 	//return error rate for bella
-//	erate = fastParser.getErate();
+
 	// verbose output
 	if (verbose) {
 		printf("================== STAGE 1 ==================\n");
@@ -216,7 +223,13 @@ void gerbil::Application::run2() {
 	// join all
 	superReader.join();
 	kmerHasher.join();
-	kmcWriter.join();
+	//kmcWriter.join();
+
+	//join, retrive the value and then delete the process
+	kmcWriter.joinWithoutDelete();
+	listKmer = kmcWriter.getListKmer();
+	kmcWriter.deleteProcessThread();
+	
 
 	sw.stop();
 	_rtRun2 = sw.get_s();
@@ -226,9 +239,7 @@ void gerbil::Application::run2() {
 
 	if(_histogram)
 		kmerHasher.saveHistogram();
-	//return list of kmer for bella
-//	listKmer = kmcWriter.getListKmer();
-	
+		
 	// verbose output
 	if (verbose) {
 		printf("================== STAGE 2 ==================\n");

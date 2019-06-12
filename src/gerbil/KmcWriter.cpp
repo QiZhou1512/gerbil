@@ -117,6 +117,15 @@ void gerbil::KmcWriter::join() {
 	delete _processThread;
 }
 
+void gerbil::KmcWriter::joinWithoutDelete(){
+	_processThread->join();
+}
+
+void gerbil::KmcWriter::deleteProcessThread(){
+	delete _processThread;
+}
+
+
 void gerbil::KmcWriter::print() {
 	printf("size of output  : %12.3f MB\n", (double)_fileSize / 1024 / 1024);
 }
