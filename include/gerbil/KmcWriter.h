@@ -33,7 +33,7 @@ class KmcWriter {
 	FILE* _file;
 	uint32_t _k;
 	TOutputFormat _outputFormat;
-	std::vector<std::pair<std::string,uint32>> list_Kmer;
+	std::vector<std::pair<std::string,uint32>> listKmer;
 
 	SyncSwapQueueMPSC<KmcBundle>* _kmcSyncSwapQueue;
 
@@ -42,6 +42,10 @@ public:
 	KmcWriter(std::string fileName,
 			SyncSwapQueueMPSC<KmcBundle>* kmcSyncSwapQueue, const uint32_t &k, const TOutputFormat pOutputFormat);
 	~KmcWriter();
+	
+	std::vector<std::pair<std::string,uint32>> getListKmer(){
+		return this->listKmer;
+	}
 
 	void process();
 	void join();

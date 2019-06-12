@@ -135,7 +135,7 @@ void gerbil::Application::run1() {
 	FastReader fastReader(frBlocksNumber, _fastFileName,
 			_readerParserThreadsNumber);
 	FastParser fastParser(readBundlesNumber, fastReader.getFileType(), st_reads,
-			fastReader.getSyncSwapQueues(), _readerParserThreadsNumber);
+			fastReader.getSyncSwapQueues(), _readerParserThreadsNumber, false);//TODO change the 'false' into a variable from the application function
 	SequenceSplitter sequenceSplitter(superBundlesNumber,
 			fastParser.getSyncQueue(), _sequenceSplitterThreadsNumber, _k, _m,
 			_tempFilesNumber, _norm);
@@ -161,7 +161,8 @@ void gerbil::Application::run1() {
 
 	sw.stop();
 	_rtRun1 = sw.get_s();
-
+	//return error rate for bella
+//	erate = fastParser.getErate();
 	// verbose output
 	if (verbose) {
 		printf("================== STAGE 1 ==================\n");
@@ -225,7 +226,9 @@ void gerbil::Application::run2() {
 
 	if(_histogram)
 		kmerHasher.saveHistogram();
-
+	//return list of kmer for bella
+//	listKmer = kmcWriter.getListKmer();
+	
 	// verbose output
 	if (verbose) {
 		printf("================== STAGE 2 ==================\n");

@@ -22,6 +22,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef APPLICATION_H_
 #define APPLICATION_H_
 
+#include <vector>
+
+#include <string>
+
 #include "global.h"
 #include "FastReader.h"
 #include "FastParser.h"
@@ -38,6 +42,9 @@ namespace gerbil {
  * Prog
  */
 class Application {
+	double erate;                                                //error rate
+//	std::vector<std::pair<std::string,uint32>> listKmer;	     //list of the counted kmer
+
 	uint32_t _k;							// size of k-mers
 	uint8 _m;								// size of minimizers
 	uint_tfn _tempFilesNumber;				// number of tempFiles
@@ -89,6 +96,14 @@ public:
 			uint32_t thresholdMin,
 			std::string kmcFileName);
 	~Application();
+
+	double getErate(){
+		return this->erate;
+	}
+
+	//std::vector<std::pair<std::string,uint32>> getListKmer(){
+	//	return this->listKmer;
+	//}
 
 	void process();
 	void run1();

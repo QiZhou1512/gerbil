@@ -109,6 +109,10 @@ namespace gerbil {
 	 */
 	class FastParser {
 	private:
+		//////////////////////
+		bool _skipEstimate;
+		double rerror = 0.0;                   //bella's read error
+		////////////////////
 		TSeqType _seqType;                          // sequence type
 		TFileType _fileType;                        // file type
 
@@ -128,7 +132,10 @@ namespace gerbil {
 		inline void skipLine(char *&bp, char *&bp_end, const size_t &tId);
 
 		inline void skipLine(char *&bp, char *&bp_end, const size_t &l, const size_t &tId);
-
+		
+		///////////////////////////
+		inline void errorEstimation(char *&bp, char *&bp_end, size_t &l, ReadBundle *&readBundle, ReadBundle *&rbs, const size_t &tId, const char &skip);
+		///////////////////////////
 		inline void storeLine(
 				char *&bp, char *&bp_end, size_t &l,
 				ReadBundle *&readBundle, ReadBundle *&rbs, const size_t &tId, const char &skip
@@ -149,6 +156,12 @@ namespace gerbil {
 
 		StopWatch *_sw;
 	public:
+		double erate; //for bella's error rate	
+		
+		double getErate(){
+			return this->erate;
+		}
+	
 		SyncSwapQueueMPMC<ReadBundle> *getSyncQueue();          // returns SyncSwapQueue of ReadBundles
 
 		inline uint64 getReadsNumber() { return _readsNumber; } // returns total number of reads
@@ -159,7 +172,8 @@ namespace gerbil {
 		FastParser(
 				uint32 &readBundlesNumber, TFileType fileType, TSeqType seqType,
 				SyncSwapQueueSPSC<FastBundle> **_fastSyncSwapQueues,
-				const uint32_t &_readerParserThreadsNumber
+				const uint32_t &_readerParserThreadsNumber,
+				bool skipEstimante
 		);
 
 		/*

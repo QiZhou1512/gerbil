@@ -5,7 +5,12 @@
  *      Author: marius
  */
 
+#include <iostream>
+#include <fstream>
+
 #include "../../include/gerbil/FastParser.h"
+#define ACSCIIBASE 33
+
 
 void gerbil::Decompressor::setCompressedFastBundle(FastBundle *pCompressedFastBundle) {
 	if (_compressedFastBundle)
@@ -116,6 +121,42 @@ inline void gerbil::FastParser::skipLine(char *&bp, char *&bp_end, const size_t 
 	}
 	skipLineBreak(bp, bp_end, tId);
 }
+////////////////////////////////////////
+inline void gerbil::FastParser::errorEstimation(char *&bp, char *&bp_end, size_t &l, ReadBundle *&readBundle, ReadBundle *&rbs, const size_t &tId, const char &skip){
+	rerror = 0.0;
+	int length = 0;
+	do{
+		char *sl(bp);
+		while(*bp != '\n' && *bp != '\r' && *bp){
+			length++;
+			
+			int bqual = (int)*bp - ACSCIIBASE;
+			double berror = pow(10, -(double)bqual/10);
+			rerror += berror;
+			++bp;
+		}
+		if(!*bp){
+			nextPart(bp, bp_end, tId);
+		}
+		if(*bp && (*bp== '\n' || *bp == '\r')){
+			++bp;
+			if(!*bp){
+			nextPart(bp, bp_end, tId);
+			}
+		}
+
+	} while(*bp && skip && *bp != skip);
+	rerror = rerror/length;
+	//std::cout<<'\n';	
+
+	//std::cout<<rerror<<"\n";
+	
+	
+
+}
+////////////////////////////////////////
+
+
 
 inline void gerbil::FastParser::storeSequence(
 		char *&bp, char *&bp_end, size_t &l,
@@ -218,12 +259,15 @@ inline void gerbil::FastParser::storeLine(
 gerbil::FastParser::FastParser(
 		uint32 &readBundlesNumber, TFileType fileType,
 		TSeqType seqType, SyncSwapQueueSPSC<FastBundle> **fastSyncSwapQueues,
-		const uint32_t &_readerParserThreadsNumber
+		const uint32_t &_readerParserThreadsNumber,
+		bool skipEstimate
 ) : _syncQueue(readBundlesNumber), _threadsNumber(_readerParserThreadsNumber), _processThreads(NULL) {
 	_fileType = fileType;
 	_seqType = seqType;
 	_fastSyncSwapQueues = fastSyncSwapQueues;
-
+	///////
+	_skipEstimate = skipEstimate;
+	//////
 	_readsNumber = 0;
 
 	_curFastBundles = new FastBundle *[_threadsNumber];
@@ -240,10 +284,12 @@ void gerbil::FastParser::processFastq(const size_t &tId) {
 	char *bp;
 	char *bp_end;
 	size_t l;
-
+	
 	ReadBundle *readBundle = new ReadBundle();
 	ReadBundle *rbs = new ReadBundle();
-
+	//////
+	erate = 0.0;
+	//////
 	while (true) {
 		nextPart(bp, bp_end, tId);
 		if (!_curFastBundles[tId]->size)
@@ -259,13 +305,23 @@ void gerbil::FastParser::processFastq(const size_t &tId) {
 			skipLine(bp, bp_end, tId);
 
 			// skip qualifiers
-            skipLine(bp, bp_end, l, tId);
+			if(_skipEstimate){
+            			skipLine(bp, bp_end, l, tId);
+			}else{
+				errorEstimation(bp, bp_end,l,readBundle, rbs, tId,'@');
+			}
+
+			//erate+=rerror;
 			while (*bp && *bp != '@')
-                skipLine(bp, bp_end, tId);
+                		skipLine(bp, bp_end, tId);
 
 			++_readsNumber;
 		}
 	}
+	erate =(double) erate/_readsNumber;
+	
+
+	
 	if (!readBundle->isEmpty())
 		_syncQueue.swapPush(readBundle);
 	delete readBundle;

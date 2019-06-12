@@ -1,5 +1,5 @@
 CXX := g++
-CPP_FLAGS := -std=c++11 -fpermissive -w -O3
+CPP_FLAGS := -std=c++14 -fpermissive -w -O3
 
 CUDACC := ${CUDA_ROOT}/bin/nvcc
 NVCC_FLAGS := -DGPU -O3
