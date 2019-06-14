@@ -15,6 +15,7 @@ gerbil::KmcWriter::KmcWriter(std::string fileName, SyncSwapQueueMPSC<KmcBundle>*
 	_k = k;
 	_outputFormat = pOutputFormat;
 	_kmcSyncSwapQueue = kmcSyncSwapQueue;
+	listKmer = new std::vector<std::pair<std::string,uint32> >();
 	if(_outputFormat != of_none) {
 		std::remove(_fileName.c_str());
 		_file = fopen(_fileName.c_str(), "wb");
@@ -34,7 +35,7 @@ gerbil::KmcWriter::~KmcWriter() {
 
 
 void gerbil::KmcWriter::process() {
-		
+	
 	if(_processThread)
 		return;
 	_processThread = new std::thread([this]{
@@ -46,7 +47,7 @@ void gerbil::KmcWriter::process() {
 			printf("kmcWriter start...\n");
 		)
 		KmcBundle* kb = new KmcBundle;
-
+		std::string kmer;
 		if(_outputFormat == of_fasta) {
 			uint32 counter;
 			char kmerSeq[_k + 1]; kmerSeq[_k] = '\0';
@@ -72,15 +73,13 @@ void gerbil::KmcWriter::process() {
 
 						// increase pointer
 						p += kMerSize_B;
-						std::string kmer(kmerSeq);
-						std::pair<std::string,uint32_t> pair = std::make_pair(kmer, counter);
+						kmer = kmerSeq;
 						
-						
-						listKmer.push_back(pair);
+						listKmer->push_back(std::make_pair(kmer,counter));
 						//std::cout<<std::get<0>(pair)<<" "<<std::get<1>(pair)<<"\n";
 						//std::cout<<"size"<<list_Kmer.size()<<"\n";						
 		// print fasta (console/file)
-						fprintf(_file, ">%u\n%s\n", counter, kmerSeq);
+					//	fprintf(_file, ">%u\n%s\n", counter, kmerSeq);
 					}
 				}
 				kb->clear();
