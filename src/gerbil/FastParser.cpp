@@ -125,15 +125,19 @@ inline void gerbil::FastParser::skipLine(char *&bp, char *&bp_end, const size_t 
 inline void gerbil::FastParser::errorEstimation(char *&bp, char *&bp_end, size_t &l, ReadBundle *&readBundle, ReadBundle *&rbs, const size_t &tId, const char &skip){
 	rerror = 0.0;
 	int length = 0;
+	int bqual;
+	double berror;
 	do{
 		char *sl(bp);
+		//error rate calculation
 		while(*bp != '\n' && *bp != '\r' && *bp){
 			length++;	
-			int bqual = (int)*bp - ACSCIIBASE;
-			double berror = pow(10, -(double)bqual/10);
+			bqual = (int)*bp - ACSCIIBASE;
+			berror = pow(10, -(double)bqual/10);
 			rerror += berror;
 			++bp;
 		}
+		//part from the storeSequence 
 		if(!*bp){
 			nextPart(bp, bp_end, tId);
 		}
@@ -146,9 +150,6 @@ inline void gerbil::FastParser::errorEstimation(char *&bp, char *&bp_end, size_t
 
 	} while(*bp && skip && *bp != skip);
 	rerror = rerror/length;
-	//std::cout<<'\n';	
-
-	//std::cout<<rerror<<"\n";
 	
 	
 

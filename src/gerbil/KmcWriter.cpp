@@ -76,8 +76,7 @@ void gerbil::KmcWriter::process() {
 						kmer = kmerSeq;
 						
 						listKmer->push_back(std::make_pair(kmer,counter));
-						//std::cout<<std::get<0>(pair)<<" "<<std::get<1>(pair)<<"\n";
-						//std::cout<<"size"<<list_Kmer.size()<<"\n";						
+												
 		// print fasta (console/file)
 					//	fprintf(_file, ">%u\n%s\n", counter, kmerSeq);
 					}
