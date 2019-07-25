@@ -96,7 +96,7 @@ namespace gerbil {
 #define DEF_KMER_RANGE 128
 #define DEF_KMER_SIZE 28
 #define MIN_KMER_SIZE 8
-#define MAX_KMER_SIZE DEF_KMER_RANGE+MIN_KMER_SIZE
+#define MAX_KMER_SIZE 128//DEF_KMER_RANGE+MIN_KMER_SIZE // re defined in bella with 128
 
 #define DEF_MEMORY_SIZE ((uint64_t)  4 * 1024)
 #define MIN_MEMORY_SIZE ((uint64_t)       512)

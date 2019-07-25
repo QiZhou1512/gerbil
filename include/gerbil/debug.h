@@ -158,9 +158,9 @@ public:
 #endif
 
 #ifdef DEB_CHECK
-#define CHECK(cond, message) if(!(cond)) printf("CHECK: %s\n\t\t%s (line %d)\n", message, __FILE__, __LINE__);
+#define CHECK_DEBUG(cond, message) if(!(cond)) printf("CHECK: %s\n\t\t%s (line %d)\n", message, __FILE__, __LINE__);
 #else
-#define CHECK(cond, message)
+#define CHECK_DEBUG(cond, message)
 #endif
 
 #ifdef DEB_SS_LOG
