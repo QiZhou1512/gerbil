@@ -70,13 +70,14 @@ unsigned long long getFreeSystemMemory()  {
  * default for params
  */
 // TODO: Reorder attributes
-gerbil::Application::Application(uint32_t kmerSize, 
+gerbil::Application::Application(uint32_t kmerSize,
+				bool en_gpu, 
 				std::string fastFileName,
 				std::string tempFolderName, 
 				uint32_t thresholdMin,
 				std::string kmcFileName,
 				bool skipEstimate) :
-		_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
+		_k(kmerSize),_en_gpu(en_gpu), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
 		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
 		_fastFileName(fastFileName), _tempFolderName(tempFolderName), _kmcFileName(kmcFileName), _tempFiles(NULL),
@@ -96,6 +97,19 @@ gerbil::Application::~Application() {
 
 void gerbil::Application::process() {
 	verbose = true;
+#ifdef GPU
+	if(_en_gpu){
+		int num;
+		auto err = cudaGetDeviceCount(&num);
+		if (err != cudaSuccess) {
+			std::cerr << "Error while searching for GPU's: " << cudaGetErrorString(err) << std::endl;
+			std::cerr << "Disabling GPU support." << std::endl;
+			_numGPUs = 0;
+		} else {
+			_numGPUs = (uint8_t) std::min(num, 2);
+		}
+	}
+#endif
 	autocompleteParams();
 	
 	printParamsInfo();

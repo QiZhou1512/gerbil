@@ -42,6 +42,7 @@ namespace gerbil {
  * Prog
  */
 class Application {
+	bool _en_gpu;
 	double erate;                                                //error rate
 	std::vector<std::pair<std::string,uint32>> *listKmer;	     //list of the counted kmer
 	bool _skipEstimate;                                           //execute or skip the error estimation
@@ -91,6 +92,7 @@ class Application {
 	void loadBinStat();
 public:
 	Application(uint32_t kmerSize,
+			bool en_gpu,
 			std::string fastFileName,
 			std::string tempFolderName,
 			uint32_t thresholdMin,
