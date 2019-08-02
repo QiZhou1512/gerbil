@@ -28,6 +28,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace gerbil {
 
 class KmcWriter {
+	int _upperBound;
+	int _lowerBound;
 	std::string _fileName;
 	std::thread* _processThread;
 	FILE* _file;
@@ -39,7 +41,7 @@ class KmcWriter {
 
 	uint64_t _fileSize;
 public:
-	KmcWriter(std::string fileName,
+	KmcWriter(int _upperBound, int _lowerBound,std::string fileName,
 			SyncSwapQueueMPSC<KmcBundle>* kmcSyncSwapQueue, const uint32_t &k, const TOutputFormat pOutputFormat);
 	~KmcWriter();
 	

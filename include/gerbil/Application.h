@@ -42,6 +42,9 @@ namespace gerbil {
  * Prog
  */
 class Application {
+	int _cov;
+	int _upperBound;
+	int _lowerBound;
 	double erate;                                                //error rate
 	std::vector<std::pair<std::string,uint32>> *listKmer;	     //list of the counted kmer
 	bool _skipEstimate;                                           //execute or skip the error estimation
@@ -90,7 +93,8 @@ class Application {
 	void saveBinStat();
 	void loadBinStat();
 public:
-	Application(uint32_t kmerSize,
+	Application(	int coverage,
+			uint32_t kmerSize,
 			std::string fastFileName,
 			std::string tempFolderName,
 			uint32_t thresholdMin,
