@@ -70,14 +70,24 @@ unsigned long long getFreeSystemMemory()  {
  * default for params
  */
 // TODO: Reorder attributes
+<<<<<<< HEAD
 gerbil::Application::Application(uint32_t kmerSize,
 				bool en_gpu, 
+=======
+gerbil::Application::Application(
+				int coverage,
+				uint32_t kmerSize, 
+>>>>>>> temp
 				std::string fastFileName,
 				std::string tempFolderName, 
 				uint32_t thresholdMin,
 				std::string kmcFileName,
 				bool skipEstimate) :
+<<<<<<< HEAD
 		_k(kmerSize),_en_gpu(en_gpu), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
+=======
+		_cov(coverage),_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
+>>>>>>> temp
 		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
 		_fastFileName(fastFileName), _tempFolderName(tempFolderName), _kmcFileName(kmcFileName), _tempFiles(NULL),
@@ -117,7 +127,7 @@ void gerbil::Application::process() {
 	checkParams();	
 
 	ReadBundle::setK(_k);
-
+	
 	if (_singleStep != 2)
 		run1();
 	else
@@ -129,6 +139,78 @@ void gerbil::Application::process() {
 	if(_singleStep != 1 && !_leaveBinStat)
 		std::remove((_tempFolderName + "binStatFile.txt").c_str());
 }
+/**
+ * @brief factorial
+ * @param n
+ * @return
+ */
+long double factorial_inG(double n)
+{
+    if(n > 1)
+        return n * factorial_inG(n - 1);
+    else
+        return 1;
+}
+
+/**
+ * @brief rbounds does upper bound selection,
+ * the lower bound is fixed and equal to 2
+ * @param d is the coverage
+ * @param e is the error rate
+ * @param k is the k-mer length
+ * @return upper bound
+ */
+int computeUpper_inG(int d, double e, int k)
+{
+    long double a,b,c;
+    double probability = 1;
+    double cumsum = 0, prev;
+    int m = d;
+    double cum_def = 0.002;
+    while(cumsum < cum_def)
+    {
+        a = factorial_inG(d)/(factorial_inG(m)*factorial_inG(d-m)); // it's fine 
+        b = pow(1-e,(m*k));
+        c = pow(1-pow(1-e,k),(d-m));
+        
+        probability = a*b*c;
+        cumsum = cumsum + probability;
+
+        if(cumsum == prev && cumsum < cum_def)
+            break;
+        --m;
+        prev = cumsum;
+    }
+    return (m+1);
+}
+
+int computeLower_inG(int d, double e, int k)
+{
+    long double a,b,c;
+    double probability = 1;
+    double cumsum = 0, prev;
+    int m = 2;
+        double cum_def = 0.002;
+    while(cumsum < cum_def)
+    {
+        a = factorial_inG(d)/(factorial_inG(m)*factorial_inG(d-m)); // it's fine 
+        b = pow(1-e,(m*k));
+        c = pow(1-pow(1-e,k),(d-m));
+        
+        probability = a*b*c;
+        cumsum = cumsum + probability;
+
+        if(cumsum == prev && cumsum < cum_def)
+            break;
+        ++m;
+        prev = cumsum;
+    }
+
+    if (m-1 < 2)
+        return 2;
+    else 
+        return (m-1);
+}
 
 void gerbil::Application::run1() {
 	// no buffer for output stream
@@ -137,7 +219,7 @@ void gerbil::Application::run1() {
 	// time
 	StopWatch sw(CLOCK_REALTIME);
 	sw.start();
-
+	std::cout<<"memory calculation"<<"\n";
 	// calculate memory
 	uint32 frBlocksNumber, readBundlesNumber, superBundlesNumber;
 	uint64 superWriterBufferSize;
@@ -145,7 +227,7 @@ void gerbil::Application::run1() {
 			superWriterBufferSize);
 
 
-
+	std::cout<<"start running first phase"<<"\n";
 	// init pipeline
 	FastReader fastReader(frBlocksNumber, _fastFileName,
 			_readerParserThreadsNumber);
@@ -171,7 +253,9 @@ void gerbil::Application::run1() {
 	fastParser.joinWithoutDelete();
 	erate = fastParser.getErate();
 	fastParser.deleteProcessThread();
-	
+	//calculates upperbound and lowerbound of the reliable kmers
+	_upperBound = computeUpper_inG(_cov, erate,_k);
+	_lowerBound = computeLower_inG(_cov, erate,_k);
 	//std::cout<<erate<<'\n';
 	sequenceSplitter.join();
 	superWriter.join();
@@ -227,7 +311,7 @@ void gerbil::Application::run2() {
 			_tempFiles, _tempFilesNumber, _thresholdMin, _norm, _tempFolderName,
 			maxKmcHashtableSize, kMerBundlesNumber,
 			superReader.getTempFilesOrder(), &distributor);
-	KmcWriter kmcWriter(_kmcFileName, kmerHasher.getKmcSyncSwapQueue(), _k, _outputFormat);
+	KmcWriter kmcWriter(_upperBound,_lowerBound,_kmcFileName, kmerHasher.getKmcSyncSwapQueue(), _k, _outputFormat);
 
 	// start pipeline
 	superReader.process();

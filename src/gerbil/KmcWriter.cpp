@@ -9,7 +9,9 @@
 #include<tuple>
 #include<vector>
 
-gerbil::KmcWriter::KmcWriter(std::string fileName, SyncSwapQueueMPSC<KmcBundle>* kmcSyncSwapQueue, const uint32_t &k, const TOutputFormat pOutputFormat) {
+gerbil::KmcWriter::KmcWriter(int upperBound, int lowerBound,std::string fileName, SyncSwapQueueMPSC<KmcBundle>* kmcSyncSwapQueue, const uint32_t &k, const TOutputFormat pOutputFormat) {
+	_upperBound = upperBound;
+	_lowerBound = lowerBound;
 	_processThread = NULL;
 	_fileName = fileName;
 	_k = k;
@@ -48,6 +50,7 @@ void gerbil::KmcWriter::process() {
 		)
 		KmcBundle* kb = new KmcBundle;
 		std::string kmer;
+		std::pair<std::string,uint32> pair_to_insert;
 		if(_outputFormat == of_fasta) {
 			uint32 counter;
 			char kmerSeq[_k + 1]; kmerSeq[_k] = '\0';
@@ -74,9 +77,9 @@ void gerbil::KmcWriter::process() {
 						// increase pointer
 						p += kMerSize_B;
 						kmer = kmerSeq;
-						
-						listKmer->push_back(std::make_pair(kmer,counter));
-												
+						pair_to_insert = std::make_pair(kmer,counter);
+						if(counter>=_lowerBound && counter<=_upperBound)
+							listKmer->push_back(pair_to_insert);		
 		// print fasta (console/file)
 					//	fprintf(_file, ">%u\n%s\n", counter, kmerSeq);
 					}
