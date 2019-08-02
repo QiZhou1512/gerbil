@@ -70,24 +70,15 @@ unsigned long long getFreeSystemMemory()  {
  * default for params
  */
 // TODO: Reorder attributes
-<<<<<<< HEAD
-gerbil::Application::Application(uint32_t kmerSize,
-				bool en_gpu, 
-=======
 gerbil::Application::Application(
 				int coverage,
 				uint32_t kmerSize, 
->>>>>>> temp
 				std::string fastFileName,
 				std::string tempFolderName, 
 				uint32_t thresholdMin,
 				std::string kmcFileName,
 				bool skipEstimate) :
-<<<<<<< HEAD
-		_k(kmerSize),_en_gpu(en_gpu), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
-=======
 		_cov(coverage),_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
->>>>>>> temp
 		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
 		_fastFileName(fastFileName), _tempFolderName(tempFolderName), _kmcFileName(kmcFileName), _tempFiles(NULL),
