@@ -42,6 +42,7 @@ namespace gerbil {
  * Prog
  */
 class Application {
+	double _suggested_erate;
 	bool _en_gpu;
 	int _cov;
 	int _upperBound;
@@ -94,7 +95,8 @@ class Application {
 	void saveBinStat();
 	void loadBinStat();
 public:
-	Application(	bool enable_gpu,
+	Application(	double suggested_erate,
+			bool enable_gpu,
 			int coverage,
 			uint32_t kmerSize,
 			std::string fastFileName,
