@@ -70,7 +70,8 @@ unsigned long long getFreeSystemMemory()  {
  * default for params
  */
 // TODO: Reorder attributes
-gerbil::Application::Application(
+gerbil::Application::Application(	
+				bool enable_gpu,
 				int coverage,
 				uint32_t kmerSize, 
 				std::string fastFileName,
@@ -78,7 +79,7 @@ gerbil::Application::Application(
 				uint32_t thresholdMin,
 				std::string kmcFileName,
 				bool skipEstimate) :
-		_cov(coverage),_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
+		_en_gpu(enable_gpu),_cov(coverage),_k(kmerSize), _m(0), _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
 		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
 		_fastFileName(fastFileName), _tempFolderName(tempFolderName), _kmcFileName(kmcFileName), _tempFiles(NULL),
@@ -242,7 +243,11 @@ void gerbil::Application::run1() {
 	//fastParser.join();
 	//joins all the threads, retrive the value and then delete the threads
 	fastParser.joinWithoutDelete();
+	if(skipEstimate){
+		erate = 0.15;
+	}else{
 	erate = fastParser.getErate();
+	}
 	fastParser.deleteProcessThread();
 	//calculates upperbound and lowerbound of the reliable kmers
 	_upperBound = computeUpper_inG(_cov, erate,_k);

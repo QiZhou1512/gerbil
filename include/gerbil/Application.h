@@ -42,6 +42,7 @@ namespace gerbil {
  * Prog
  */
 class Application {
+	bool _en_gpu;
 	int _cov;
 	int _upperBound;
 	int _lowerBound;
@@ -93,7 +94,8 @@ class Application {
 	void saveBinStat();
 	void loadBinStat();
 public:
-	Application(	int coverage,
+	Application(	bool enable_gpu,
+			int coverage,
 			uint32_t kmerSize,
 			std::string fastFileName,
 			std::string tempFolderName,
