@@ -71,6 +71,7 @@ unsigned long long getFreeSystemMemory()  {
  */
 // TODO: Reorder attributes
 gerbil::Application::Application(
+				double minProbability,
 				double suggested_erate,	
 				bool enable_gpu,
 				int coverage,
@@ -80,7 +81,7 @@ gerbil::Application::Application(
 				uint32_t thresholdMin,
 				std::string kmcFileName,
 				bool skipEstimate) :
-		_suggested_erate(suggested_erate),_en_gpu(enable_gpu),_cov(coverage),_k(kmerSize), _m(0),
+		_minProbability(minProbability),_suggested_erate(suggested_erate),_en_gpu(enable_gpu),_cov(coverage),_k(kmerSize), _m(0),
 		 _tempFilesNumber(0), _sequenceSplitterThreadsNumber(0),
 		_superSplitterThreadsNumber(0), _hasherThreadsNumber(0), _thresholdMin(thresholdMin), _memSize(0),
 		_threadsNumber(0), _norm(DEF_NORM),
@@ -138,12 +139,13 @@ void gerbil::Application::process() {
  * @param n
  * @return
  */
-long double factorial_inG(double n)
+long double factorial_inG(long double number)
 {
-    if(n > 1)
-        return n * factorial_inG(n - 1);
-    else
-        return 1;
+    long double fac =1;
+#pragma omp parallel for reduction(*:fac)
+    for(int n = 2; n<=(int)number; ++n)
+	fac*=n;
+    return fac;
 }
 
 /**
@@ -154,58 +156,62 @@ long double factorial_inG(double n)
  * @param k is the k-mer length
  * @return upper bound
  */
-int computeUpper_inG(int d, double e, int k)
+int computeUpper_inG(int myCoverage, double errorRate, int kmerSize, double minProbability)
 {
-    long double a,b,c;
-    double probability = 1;
-    double cumsum = 0, prev;
-    int m = d;
-    double cum_def = 0.002;
-    while(cumsum < cum_def)
-    {
-        a = factorial_inG(d)/(factorial_inG(m)*factorial_inG(d-m)); // it's fine 
-        b = pow(1-e,(m*k));
-        c = pow(1-pow(1-e,k),(d-m));
-        
-        probability = a*b*c;
-        cumsum = cumsum + probability;
+	long double a, b, c;
+	long double dfact = factorial_inG(myCoverage);
+	long double bbase = (1-errorRate);
+	long double cbase = (1-pow(bbase, kmerSize));
+	long double probability = 1;
+	long double sum = 0, prev;
+	int m = myCoverage;
 
-        if(cumsum == prev && cumsum < cum_def)
-            break;
-        --m;
-        prev = cumsum;
-    }
-    return (m+1);
+	while(sum < minProbability)
+	{
+		a = dfact / (factorial_inG(m) * factorial_inG(myCoverage - m));
+		b = pow(bbase, (m * kmerSize));
+		c = pow(cbase, (myCoverage - m));
+
+		probability = a * b * c;
+		sum = sum + probability;
+
+		if(sum == prev && sum < minProbability)
+			break;
+		--m;
+		prev = sum;
+	}
+	return (m+1);
 }
 
-int computeLower_inG(int d, double e, int k)
+int computeLower_inG(int myCoverage, double errorRate, int kmerSize, double minProbability)
 {
-    long double a,b,c;
-    double probability = 1;
-    double cumsum = 0, prev;
-    int m = 2;
-        double cum_def = 0.002;
-    while(cumsum < cum_def)
-    {
-        a = factorial_inG(d)/(factorial_inG(m)*factorial_inG(d-m)); // it's fine 
-        b = pow(1-e,(m*k));
-        c = pow(1-pow(1-e,k),(d-m));
-        
-        probability = a*b*c;
-        cumsum = cumsum + probability;
+	long double a, b, c;
+	long double dfact = factorial_inG(myCoverage);
+	long double bbase = (1-errorRate);
+	long double cbase = (1-pow(bbase, kmerSize));
+	long double probability = 1;
+	long double sum = 0, prev;
+	int mymin = 2;
+	int m = mymin;
 
-        if(cumsum == prev && cumsum < cum_def)
-            break;
-        ++m;
-        prev = cumsum;
-    }
+	while(sum < minProbability)
+	{
+		a = dfact / (factorial_inG(m) * factorial_inG(myCoverage - m));
+		b = pow(bbase, (m * kmerSize));
+		c = pow(cbase, (myCoverage - m));
 
-    if (m-1 < 2)
-        return 2;
-    else 
-        return (m-1);
+		probability = a * b * c;
+		sum = sum + probability;
+
+		if(sum == prev && sum < minProbability)
+			break;
+		++m;
+		prev = sum;
+	}
+
+	return std::max(m-1, mymin);
+
 }
-
 void gerbil::Application::run1() {
 	// no buffer for output stream
 	setbuf(stdout, NULL);
@@ -254,12 +260,15 @@ void gerbil::Application::run1() {
 	}
 	fastParser.deleteProcessThread();
 	//calculates upperbound and lowerbound of the reliable kmers
-	_upperBound = computeUpper_inG(_cov, erate,_k);
-	_lowerBound = computeLower_inG(_cov, erate,_k);
+	_upperBound = computeUpper_inG(_cov, erate,_k,_minProbability);
+	_lowerBound = computeLower_inG(_cov, erate,_k,_minProbability);
 	//std::cout<<erate<<'\n';
 	sequenceSplitter.join();
 	superWriter.join();
-
+	//printf("errorRate :                     %f\n",erate);
+	std::cout << "Error rate estimate is " << erate << std::endl;
+	printf("kmerFrequencyLowerBound:        %d\n",_lowerBound);
+	printf("kmerFrequencyUpperBound:        %d\n",_upperBound);
 	// save bin statistic
 	_tempFiles = superWriter.getTempFiles();
 	saveBinStat();

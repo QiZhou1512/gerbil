@@ -42,6 +42,7 @@ namespace gerbil {
  * Prog
  */
 class Application {
+	double _minProbability;
 	double _suggested_erate;
 	bool _en_gpu;
 	int _cov;
@@ -95,7 +96,9 @@ class Application {
 	void saveBinStat();
 	void loadBinStat();
 public:
-	Application(	double suggested_erate,
+	Application(	
+			double minProbability,
+			double suggested_erate,
 			bool enable_gpu,
 			int coverage,
 			uint32_t kmerSize,
